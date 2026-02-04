@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "convex": "convex"
+    "convex": "convex",
+    "daemon": "node daemon/notifications.js",
+    "daemon:dev": "npx convex dev & node daemon/notifications.js"
   },
   "dependencies": {
     "convex": "^1.14.0",
