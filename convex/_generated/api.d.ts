@@ -11,6 +11,7 @@
 import type * as activities from "../activities.js";
 import type * as agents from "../agents.js";
 import type * as agents_update from "../agents_update.js";
+import type * as command from "../command.js";
 import type * as daemon from "../daemon.js";
 import type * as documents from "../documents.js";
 import type * as messages from "../messages.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   agents: typeof agents;
   agents_update: typeof agents_update;
+  command: typeof command;
   daemon: typeof daemon;
   documents: typeof documents;
   messages: typeof messages;
