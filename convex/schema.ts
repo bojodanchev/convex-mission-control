@@ -51,7 +51,7 @@ export default defineSchema({
 
   // Messages/Comments on tasks
   messages: defineTable({
-    taskId: v.id("tasks"),
+    taskId: v.optional(v.id("tasks")),
     fromAgentId: v.union(v.id("agents"), v.literal("master")),
     content: v.string(),
     mentions: v.array(v.id("agents")), // @mentions

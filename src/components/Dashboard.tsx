@@ -7,11 +7,15 @@ import TaskBoard from "./TaskBoard";
 import ActivityFeed from "./ActivityFeed";
 import DocumentList from "./DocumentList";
 import StandupView from "./StandupView";
+import BroadcastPanel from "./BroadcastPanel";
+import ChatPanel from "./ChatPanel";
 
 const Dashboard: React.FC = () => {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"tasks" | "activity" | "docs" | "standup">("tasks");
   const [filterAgent, setFilterAgent] = useState<string | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [showBroadcast, setShowBroadcast] = useState(false);
 
   const agents = useQuery(api.agents.list);
   const tasksByStatus = useQuery(api.tasks.byStatus);
@@ -68,11 +72,23 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="header-actions">
-          <button className="action-btn chat-btn">
+          <button 
+            className={`action-btn chat-btn ${showChat ? "active" : ""}`}
+            onClick={() => {
+              setShowChat(!showChat);
+              setShowBroadcast(false);
+            }}
+          >
             <span>💬</span>
             Chat
           </button>
-          <button className="action-btn broadcast-btn">
+          <button 
+            className={`action-btn broadcast-btn ${showBroadcast ? "active" : ""}`}
+            onClick={() => {
+              setShowBroadcast(!showBroadcast);
+              setShowChat(false);
+            }}
+          >
             <span>📢</span>
             Broadcast
           </button>
@@ -95,6 +111,20 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <div className="panel-overlay">
+          <ChatPanel onClose={() => setShowChat(false)} />
+        </div>
+      )}
+
+      {/* Broadcast Panel */}
+      {showBroadcast && (
+        <div className="panel-overlay">
+          <BroadcastPanel onClose={() => setShowBroadcast(false)} />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="dashboard-body">

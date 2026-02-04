@@ -4,7 +4,7 @@ import { query, mutation } from "./_generated/server";
 // Create a message/comment
 export const create = mutation({
   args: {
-    taskId: v.id("tasks"),
+    taskId: v.union(v.id("tasks"), v.literal("general")),
     content: v.string(),
     mentions: v.optional(v.array(v.id("agents"))),
   },
@@ -12,11 +12,10 @@ export const create = mutation({
     const now = Date.now();
     
     // Get agent from session or default to master
-    // In practice, you'd identify which agent is calling
-    const fromAgentId: any = "master"; // Or detect from auth
+    const fromAgentId: any = "master";
 
     const messageId = await ctx.db.insert("messages", {
-      taskId: args.taskId,
+      taskId: args.taskId === "general" ? undefined : args.taskId,
       fromAgentId,
       content: args.content,
       mentions: args.mentions || [],
@@ -26,8 +25,8 @@ export const create = mutation({
     // Log activity
     await ctx.db.insert("activities", {
       type: "message_sent",
-      taskId: args.taskId,
-      message: `New comment on task`,
+      taskId: args.taskId === "general" ? undefined : args.taskId,
+      message: args.taskId === "general" ? "New message in general chat" : `New comment on task`,
       createdAt: now,
     });
 
@@ -38,44 +37,7 @@ export const create = mutation({
           mentionedAgentId: agentId,
           content: `You were mentioned: ${args.content.substring(0, 100)}...`,
           fromAgentId: fromAgentId !== "master" ? fromAgentId : undefined,
-          taskId: args.taskId,
-          messageId,
-          delivered: false,
-          createdAt: now,
-        });
-      }
-    }
-
-    // Auto-subscribe commenter to thread
-    if (fromAgentId !== "master") {
-      const existing = await ctx.db
-        .query("subscriptions")
-        .withIndex("by_agent_task", (q) =>
-          q.eq("agentId", fromAgentId).eq("taskId", args.taskId)
-        )
-        .first();
-
-      if (!existing) {
-        await ctx.db.insert("subscriptions", {
-          agentId: fromAgentId,
-          taskId: args.taskId,
-          subscribedAt: now,
-        });
-      }
-    }
-
-    // Notify all subscribers (except the author)
-    const subscribers = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
-      .collect();
-
-    for (const sub of subscribers) {
-      if (sub.agentId !== fromAgentId) {
-        await ctx.db.insert("notifications", {
-          mentionedAgentId: sub.agentId,
-          content: `New reply on subscribed task`,
-          taskId: args.taskId,
+          taskId: args.taskId === "general" ? undefined : args.taskId,
           messageId,
           delivered: false,
           createdAt: now,
