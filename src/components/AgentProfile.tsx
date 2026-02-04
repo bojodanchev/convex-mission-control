@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Doc } from "../../convex/_generated/dataModel";
 
@@ -10,7 +10,6 @@ interface AgentProfileProps {
 
 const AgentProfile: React.FC<AgentProfileProps> = ({ agent, onClose }) => {
   const notifications = useQuery(api.notifications.undelivered, { agentId: agent._id });
-  const activities = useQuery(api.activities.byAgent, { agentId: agent._id, limit: 10 });
 
   const getStatusColor = (status: string) => {
     switch (status) {
