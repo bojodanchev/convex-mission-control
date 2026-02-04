@@ -18,6 +18,7 @@ import type * as documents from "../documents.js";
 import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as standup from "../standup.js";
+import type * as task_assignments from "../task_assignments.js";
 import type * as tasks from "../tasks.js";
 
 import type {
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   notifications: typeof notifications;
   standup: typeof standup;
+  task_assignments: typeof task_assignments;
   tasks: typeof tasks;
 }>;
 
