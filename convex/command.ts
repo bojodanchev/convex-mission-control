@@ -5,9 +5,8 @@ import { query, mutation } from "./_generated/server";
 export const createCommand = mutation({
   args: {
     name: v.string(),
-    telegramId: v.optional(v.string()),
   },
-  handler: async (ctx, { name, telegramId }) => {
+  handler: async (ctx, { name }) => {
     // Check if command already exists
     const existing = await ctx.db
       .query("agents")
