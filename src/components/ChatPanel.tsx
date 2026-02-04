@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 
 const ChatPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const agents = useQuery(api.agents.list);
   const messages = useQuery(api.messages.recent, { limit: 50 });
   const createMessage = useMutation(api.messages.create);
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<Id<"agents"> | null>(null);
   const [messageText, setMessageText] = useState("");
 
   if (!agents || !messages) {
@@ -17,7 +18,7 @@ const ChatPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     if (!messageText.trim()) return;
     
     // If no agent selected, create a general message
-    const mentions = selectedAgent ? [selectedAgent] : [];
+    const mentions: Id<"agents">[] = selectedAgent ? [selectedAgent] : [];
     
     await createMessage({
       taskId: "general", // Using a placeholder - in real implementation, this might be a general chat task

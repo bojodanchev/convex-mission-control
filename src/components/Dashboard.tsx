@@ -114,15 +114,19 @@ const Dashboard: React.FC = () => {
 
       {/* Chat Panel */}
       {showChat && (
-        <div className="panel-overlay">
-          <ChatPanel onClose={() => setShowChat(false)} />
+        <div className="panel-overlay" onClick={() => setShowChat(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <ChatPanel onClose={() => setShowChat(false)} />
+          </div>
         </div>
       )}
 
       {/* Broadcast Panel */}
       {showBroadcast && (
-        <div className="panel-overlay">
-          <BroadcastPanel onClose={() => setShowBroadcast(false)} />
+        <div className="panel-overlay" onClick={() => setShowBroadcast(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <BroadcastPanel onClose={() => setShowBroadcast(false)} />
+          </div>
         </div>
       )}
 

@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Doc } from "../../convex/_generated/dataModel";
+import { Doc, Id } from "../../convex/_generated/dataModel";
 
 interface DocumentViewerProps {
   document: Doc<"documents"> & { createdByName?: string };
   onClose: () => void;
-  onUpdate: (id: string, updates: { title?: string; content?: string }) => void;
+  onUpdate: (id: Id<"documents">, updates: { title?: string; content?: string }) => void;
 }
 
 const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClose, onUpdate }) => {

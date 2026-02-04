@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Doc } from "../../convex/_generated/dataModel";
+import { Id } from "../../convex/_generated/dataModel";
 
-const BroadcastPanel: React.FC = () => {
+const BroadcastPanel: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const agents = useQuery(api.agents.list);
   const broadcastStats = useQuery(api.broadcast.getStats);
   const sendBroadcast = useMutation(api.broadcast.send);
@@ -13,7 +13,7 @@ const BroadcastPanel: React.FC = () => {
   const [priority, setPriority] = useState<"low" | "normal" | "high" | "urgent">("normal");
   const [category, setCategory] = useState("announcement");
   const [targetMode, setTargetMode] = useState<"all" | "specific">("all");
-  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  const [selectedAgents, setSelectedAgents] = useState<Id<"agents">[]>([]);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ success?: boolean; recipientCount?: number } | null>(null);
 
@@ -43,7 +43,7 @@ const BroadcastPanel: React.FC = () => {
     setSending(false);
   };
 
-  const toggleAgent = (agentId: string) => {
+  const toggleAgent = (agentId: Id<"agents">) => {
     setSelectedAgents(prev => 
       prev.includes(agentId) 
         ? prev.filter(id => id !== agentId)
@@ -78,7 +78,10 @@ const BroadcastPanel: React.FC = () => {
     <div className="broadcast-panel">
       <div className="broadcast-header">
         <h3>📢 Broadcast Message</h3>
-        <button className="close-btn" onClick={() => setIsOpen(false)}>×</button>
+        <button className="close-btn" onClick={() => {
+          setIsOpen(false);
+          onClose?.();
+        }}>×</button>
       </div>
 
       <div className="broadcast-stats">

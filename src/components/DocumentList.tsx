@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Doc } from "../../convex/_generated/dataModel";
+import { Doc, Id } from "../../convex/_generated/dataModel";
 import DocumentViewer from "./DocumentViewer";
 
 const DocumentList: React.FC = () => {
@@ -13,7 +13,7 @@ const DocumentList: React.FC = () => {
   const [newDocTitle, setNewDocTitle] = useState("");
   const [newDocType, setNewDocType] = useState<"note" | "research" | "protocol" | "deliverable">("note");
   const [filterType, setFilterType] = useState<string | "all">("all");
-  const [selectedDoc, setSelectedDoc] = useState<(Doc<"documents"> & { createdByName?: string }) | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<Doc<"documents"> | null>(null);
 
   if (!documents) {
     return <div className="loading">Loading documents...</div>;
@@ -37,9 +37,8 @@ const DocumentList: React.FC = () => {
     setIsCreating(false);
   };
 
-  const handleUpdate = async (id: string, updates: { title?: string; content?: string }) => {
+  const handleUpdate = async (id: Id<"documents">, updates: { title?: string; content?: string }) => {
     await updateDocument({ id, ...updates });
-    // Refresh selected doc
     if (selectedDoc) {
       setSelectedDoc({ ...selectedDoc, ...updates, updatedAt: Date.now() });
     }
@@ -135,7 +134,7 @@ const DocumentList: React.FC = () => {
             <div 
               key={doc._id} 
               className="doc-card"
-              onClick={() => setSelectedDoc(doc as any)}
+              onClick={() => setSelectedDoc(doc)}
             >
               <div className="doc-icon">{getTypeIcon(doc.type)}</div>
               <div className="doc-info">
