@@ -1,72 +1,168 @@
 import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import AgentList from "./AgentList";
+import AgentProfile from "./AgentProfile";
 import TaskBoard from "./TaskBoard";
-import AgentCard from "./AgentCard";
 import ActivityFeed from "./ActivityFeed";
 import DocumentList from "./DocumentList";
 import StandupView from "./StandupView";
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    "board" | "agents" | "activity" | "docs" | "standup"
-  >("board");
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<"tasks" | "activity" | "docs" | "standup">("tasks");
+  const [filterAgent, setFilterAgent] = useState<string | null>(null);
 
   const agents = useQuery(api.agents.list);
   const tasksByStatus = useQuery(api.tasks.byStatus);
 
   if (!agents || !tasksByStatus) {
-    return <div className="loading">Loading Mission Control...</div>;
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Initializing Mission Control...</p>
+      </div>
+    );
   }
+
+  const totalTasks = Object.values(tasksByStatus).flat().length;
+  const activeAgents = agents.filter(a => a.status === "active").length;
+
+  const selectedAgent = selectedAgentId 
+    ? agents.find(a => a._id === selectedAgentId) 
+    : null;
 
   return (
     <div className="dashboard">
-      <nav className="dashboard-nav">
-        <button
-          className={activeTab === "board" ? "active" : ""}
-          onClick={() => setActiveTab("board")}
+      {/* Top Header */}
+      <header className="dashboard-header">
+        <div className="header-left">
+          <div className="logo">
+            <span className="logo-icon">🎯</span>
+            <h1>Mission Control</h1>
+          </div>
+        </div>
+
+        <div className="header-stats">
+          <div className="stat-item">
+            <span className="stat-value">{activeAgents}</span>
+            <span className="stat-label">Agents Active</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value">{totalTasks}</span>
+            <span className="stat-label">Tasks in Queue</span>
+          </div>
+        </div>
+
+        <div className="header-filters">
+          <select 
+            className="filter-select"
+            value={filterAgent || ""}
+            onChange={(e) => setFilterAgent(e.target.value || null)}
+          >
+            <option value="">All Agents</option>
+            {agents.map(agent => (
+              <option key={agent._id} value={agent._id}>{agent.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="header-actions">
+          <button className="action-btn chat-btn">
+            <span>💬</span>
+            Chat
+          </button>
+          <button className="action-btn broadcast-btn">
+            <span>📢</span>
+            Broadcast
+          </button>
+          <button 
+            className={`action-btn docs-btn ${activeView === "docs" ? "active" : ""}`}
+            onClick={() => setActiveView("docs")}
+          >
+            <span>📄</span>
+            Docs
+          </button>
+        </div>
+
+        <div className="header-right">
+          <div className="clock">
+            {new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
+          </div>
+          <div className="online-status">
+            <span className="status-dot online"></span>
+            Online
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="dashboard-body">
+        {/* Left Sidebar - Agent List */}
+        <aside className="sidebar-left">
+          <AgentList 
+            agents={agents} 
+            selectedAgentId={selectedAgentId}
+            onSelectAgent={setSelectedAgentId}
+          />
+        </aside>
+
+        {/* Center - Main Content */}
+        <main className="main-content">
+          {activeView === "tasks" && (
+            <TaskBoard 
+              tasks={tasksByStatus} 
+              filterAgentId={filterAgent}
+              agents={agents}
+            />
+          )}
+          {activeView === "activity" && <ActivityFeed />}
+          {activeView === "docs" && <DocumentList />}
+          {activeView === "standup" && <StandupView />}
+        </main>
+
+        {/* Right Sidebar - Agent Profile */}
+        <aside className={`sidebar-right ${selectedAgent ? "open" : ""}`}>
+          {selectedAgent ? (
+            <AgentProfile 
+              agent={selectedAgent} 
+              onClose={() => setSelectedAgentId(null)}
+            />
+          ) : (
+            <div className="profile-placeholder">
+              <p>Select an agent to view profile</p>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* Bottom Navigation (mobile) */}
+      <nav className="bottom-nav">
+        <button 
+          className={activeView === "tasks" ? "active" : ""}
+          onClick={() => setActiveView("tasks")}
         >
-          📋 Task Board
+          📋 Tasks
         </button>
-        <button
-          className={activeTab === "agents" ? "active" : ""}
-          onClick={() => setActiveTab("agents")}
-        >
-          🤖 Agents ({agents.length})
-        </button>
-        <button
-          className={activeTab === "activity" ? "active" : ""}
-          onClick={() => setActiveTab("activity")}
+        <button 
+          className={activeView === "activity" ? "active" : ""}
+          onClick={() => setActiveView("activity")}
         >
           📡 Activity
         </button>
-        <button
-          className={activeTab === "docs" ? "active" : ""}
-          onClick={() => setActiveTab("docs")}
+        <button 
+          className={activeView === "docs" ? "active" : ""}
+          onClick={() => setActiveView("docs")}
         >
-          📄 Documents
+          📄 Docs
         </button>
-        <button
-          className={activeTab === "standup" ? "active" : ""}
-          onClick={() => setActiveTab("standup")}
+        <button 
+          className={activeView === "standup" ? "active" : ""}
+          onClick={() => setActiveView("standup")}
         >
           📊 Standup
         </button>
       </nav>
-
-      <div className="dashboard-content">
-        {activeTab === "board" && <TaskBoard tasks={tasksByStatus} />}
-        {activeTab === "agents" && (
-          <div className="agents-grid">
-            {agents.map((agent) => (
-              <AgentCard key={agent._id} agent={agent} />
-            ))}
-          </div>
-        )}
-        {activeTab === "activity" && <ActivityFeed />}
-        {activeTab === "docs" && <DocumentList />}
-        {activeTab === "standup" && <StandupView />}
-      </div>
     </div>
   );
 };
