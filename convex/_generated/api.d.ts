@@ -9,6 +9,7 @@
  */
 
 import type * as activities from "../activities.js";
+import type * as agent_work from "../agent_work.js";
 import type * as agents from "../agents.js";
 import type * as agents_update from "../agents_update.js";
 import type * as broadcast from "../broadcast.js";
@@ -31,6 +32,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
+  agent_work: typeof agent_work;
   agents: typeof agents;
   agents_update: typeof agents_update;
   broadcast: typeof broadcast;

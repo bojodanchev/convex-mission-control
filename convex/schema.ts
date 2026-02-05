@@ -133,6 +133,12 @@ export default defineSchema({
     .index("by_delivered", ["mentionedAgentId", "delivered"])
     .index("by_created_at", ["createdAt"]),
 
+  // System status (pause, etc)
+  systemStatus: defineTable({
+    paused: v.boolean(),
+    updatedAt: v.number(),
+  }),
+
   // Thread subscriptions (auto-notify on replies)
   subscriptions: defineTable({
     agentId: v.id("agents"),

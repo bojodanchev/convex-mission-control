@@ -1,13 +1,11 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
-// System-wide pause state
-let systemPaused = false;
-
 // Get system pause status
 export const getPauseStatus = query({
-  handler: async () => {
-    return { paused: systemPaused };
+  handler: async (ctx) => {
+    const status = await ctx.db.query("systemStatus").first();
+    return { paused: status?.paused || false };
   },
 });
 
@@ -17,7 +15,19 @@ export const togglePause = mutation({
     paused: v.boolean(),
   },
   handler: async (ctx, { paused }) => {
-    systemPaused = paused;
+    const existing = await ctx.db.query("systemStatus").first();
+    
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        paused,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("systemStatus", {
+        paused,
+        updatedAt: Date.now(),
+      });
+    }
     
     // Log activity
     await ctx.db.insert("activities", {
@@ -27,7 +37,7 @@ export const togglePause = mutation({
       createdAt: Date.now(),
     });
     
-    return { paused: systemPaused };
+    return { paused };
   },
 });
 
