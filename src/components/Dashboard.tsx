@@ -148,6 +148,7 @@ const Dashboard: React.FC = () => {
               tasks={tasksByStatus} 
               filterAgentId={filterAgent}
               agents={agents}
+              currentAgentId={filterAgent as any} // Allow claiming when filtering by agent
             />
           )}
           {activeView === "activity" && <ActivityFeed />}

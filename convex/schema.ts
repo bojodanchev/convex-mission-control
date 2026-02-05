@@ -16,6 +16,8 @@ export default defineSchema({
     lastHeartbeatAt: v.optional(v.number()), // Unix timestamp
     personality: v.string(), // Brief personality description
     specialty: v.array(v.string()), // List of specialties
+    skills: v.optional(v.array(v.string())), // NEW: Skills for task matching (e.g., "security", "docs", "research")
+    canProposeTasks: v.optional(v.boolean()), // NEW: Whether agent can auto-create tasks
   })
     .index("by_name", ["name"])
     .index("by_session_key", ["sessionKey"]),
@@ -40,6 +42,9 @@ export default defineSchema({
       v.literal("urgent")
     ),
     createdBy: v.union(v.id("agents"), v.literal("master")),
+    proposedBy: v.optional(v.id("agents")), // NEW: Agent that proposed this task (if auto-created)
+    requiredSkills: v.optional(v.array(v.string())), // NEW: Skills needed to claim this task
+    claimedAt: v.optional(v.number()), // NEW: When task was claimed from inbox
     createdAt: v.number(),
     updatedAt: v.number(),
     dueDate: v.optional(v.number()),
@@ -47,7 +52,8 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_assignee", ["assigneeIds"])
-    .index("by_created_at", ["createdAt"]),
+    .index("by_created_at", ["createdAt"])
+    .index("by_proposed_by", ["proposedBy"]), // NEW: Index for finding agent-proposed tasks
 
   // Messages/Comments on tasks
   messages: defineTable({
@@ -67,6 +73,7 @@ export default defineSchema({
       v.literal("task_created"),
       v.literal("task_updated"),
       v.literal("task_completed"),
+      v.literal("task_claimed"), // NEW: Task claimed from inbox
       v.literal("message_sent"),
       v.literal("document_created"),
       v.literal("document_updated"),

@@ -24,6 +24,8 @@ export const createCommand = mutation({
       sessionKey: "human:command:main",
       personality: "The orchestrator. Creates missions, reviews deliverables, makes strategic decisions.",
       specialty: ["Strategic oversight", "Task assignment", "Final approval", "Delegation"],
+      skills: ["orchestration", "strategy", "review"], // NEW
+      canProposeTasks: false, // NEW: Humans don't propose through this system
       currentTaskId: undefined,
       lastHeartbeatAt: Date.now(),
     });
@@ -65,6 +67,8 @@ export const initializeSystem = mutation({
         sessionKey: "human:command:main",
         personality: "The orchestrator. Creates missions, reviews deliverables, makes strategic decisions. Delegates to Vulture, Scribe, and Horizon.",
         specialty: ["Strategic oversight", "Task assignment", "Final approval", "Mission planning"],
+        skills: ["orchestration", "strategy", "review"], // NEW
+        canProposeTasks: false, // NEW
         lastHeartbeatAt: Date.now(),
       });
     } else {

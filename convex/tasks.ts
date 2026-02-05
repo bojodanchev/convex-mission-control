@@ -12,6 +12,7 @@ export const create = mutation({
     assigneeIds: v.optional(v.array(v.id("agents"))),
     dueDate: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),
+    requiredSkills: v.optional(v.array(v.string())), // NEW
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -20,6 +21,7 @@ export const create = mutation({
       status: args.assigneeIds && args.assigneeIds.length > 0 ? "assigned" : "inbox",
       priority: args.priority || "medium",
       assigneeIds: args.assigneeIds || [],
+      requiredSkills: args.requiredSkills || [], // NEW
       createdBy: "master", // Or could be agent ID
       createdAt: now,
       updatedAt: now,

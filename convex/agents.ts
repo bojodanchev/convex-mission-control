@@ -18,6 +18,8 @@ export const init = mutation({
         sessionKey: "agent:vulture:main",
         personality: "Ruthless but fair security reviewer",
         specialty: ["Security audits", "PR reviews", "Style checks"],
+        skills: ["security", "audit", "code-review", "owasp"], // NEW
+        canProposeTasks: true, // NEW: Can auto-create security tasks
       },
       {
         name: "Scribe",
@@ -26,6 +28,8 @@ export const init = mutation({
         sessionKey: "agent:scribe:main",
         personality: "Obsessively organized knowledge keeper",
         specialty: ["SOP maintenance", "Learnings extraction", "Wiki sync"],
+        skills: ["documentation", "writing", "organization", "wiki"], // NEW
+        canProposeTasks: true, // NEW: Can auto-create doc tasks
       },
       {
         name: "Horizon",
@@ -34,6 +38,8 @@ export const init = mutation({
         sessionKey: "agent:horizon:main",
         personality: "Always scanning the horizon for threats and opportunities",
         specialty: ["Fintech news", "Regulations", "Competitor monitoring"],
+        skills: ["research", "analysis", "news", "competitive-intel"], // NEW
+        canProposeTasks: true, // NEW: Can auto-create research tasks
       },
     ];
 

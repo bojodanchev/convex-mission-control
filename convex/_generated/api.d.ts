@@ -16,9 +16,11 @@ import type * as command from "../command.js";
 import type * as daemon from "../daemon.js";
 import type * as documents from "../documents.js";
 import type * as messages from "../messages.js";
+import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as standup from "../standup.js";
 import type * as task_assignments from "../task_assignments.js";
+import type * as task_autonomy from "../task_autonomy.js";
 import type * as tasks from "../tasks.js";
 
 import type {
@@ -36,9 +38,11 @@ declare const fullApi: ApiFromModules<{
   daemon: typeof daemon;
   documents: typeof documents;
   messages: typeof messages;
+  migrations: typeof migrations;
   notifications: typeof notifications;
   standup: typeof standup;
   task_assignments: typeof task_assignments;
+  task_autonomy: typeof task_autonomy;
   tasks: typeof tasks;
 }>;
 
