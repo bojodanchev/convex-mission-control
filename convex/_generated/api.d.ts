@@ -19,6 +19,7 @@ import type * as documents from "../documents.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
+import type * as openclaw_webhook from "../openclaw_webhook.js";
 import type * as standup from "../standup.js";
 import type * as task_assignments from "../task_assignments.js";
 import type * as task_autonomy from "../task_autonomy.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   migrations: typeof migrations;
   notifications: typeof notifications;
+  openclaw_webhook: typeof openclaw_webhook;
   standup: typeof standup;
   task_assignments: typeof task_assignments;
   task_autonomy: typeof task_autonomy;

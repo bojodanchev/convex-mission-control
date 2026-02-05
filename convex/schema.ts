@@ -46,6 +46,10 @@ export default defineSchema({
     proposedBy: v.optional(v.id("agents")), // NEW: Agent that proposed this task (if auto-created)
     requiredSkills: v.optional(v.array(v.string())), // NEW: Skills needed to claim this task
     claimedAt: v.optional(v.number()), // NEW: When task was claimed from inbox
+    // OpenClaw Integration Fields
+    openclawRunId: v.optional(v.string()), // Track OpenClaw session
+    openclawSessionKey: v.optional(v.string()),
+    openclawSource: v.optional(v.string()), // Telegram, Discord, etc.
     createdAt: v.number(),
     updatedAt: v.number(),
     dueDate: v.optional(v.number()),
@@ -54,7 +58,8 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_assignee", ["assigneeIds"])
     .index("by_created_at", ["createdAt"])
-    .index("by_proposed_by", ["proposedBy"]), // NEW: Index for finding agent-proposed tasks
+    .index("by_proposed_by", ["proposedBy"])
+    .index("by_openclaw_run", ["openclawRunId"]), // NEW: Index for OpenClaw tracking // NEW: Index for finding agent-proposed tasks
 
   // Messages/Comments on tasks
   messages: defineTable({
@@ -147,4 +152,13 @@ export default defineSchema({
   })
     .index("by_agent_task", ["agentId", "taskId"])
     .index("by_task", ["taskId"]),
+
+  // OpenClaw session mappings (link OpenClaw sessions to agents)
+  agentSessionMappings: defineTable({
+    openclawSessionKey: v.string(),
+    agentId: v.id("agents"),
+    createdAt: v.number(),
+  })
+    .index("by_session_key", ["openclawSessionKey"])
+    .index("by_agent", ["agentId"]),
 });
