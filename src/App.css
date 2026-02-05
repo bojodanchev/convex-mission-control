@@ -2016,3 +2016,130 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.filter-tab:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.filter-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--bg-primary);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.filter-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Task Tags */
+.task-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.task-tag {
+  padding: 4px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: lowercase;
+}
+
+/* Pause Button */
+.pause-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pause-btn:hover {
+  background: var(--bg-card);
+}
+
+.pause-btn.paused {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.pause-btn.paused:hover {
+  background: #7bc062;
+}
+
+/* Waiting Column */
+.waiting-column {
+  background: rgba(224, 175, 104, 0.05);
+}
+
+.waiting-column .column-header {
+  background: rgba(224, 175, 104, 0.1);
+  border-bottom-color: var(--warning);
+}
+
+.waiting-column .column-header h3 {
+  color: var(--warning);
+}
+
+/* Inbox Column Highlight */
+.inbox-column {
+  background: rgba(122, 162, 247, 0.05);
+}
+
+.inbox-column .column-header {
+  background: rgba(122, 162, 247, 0.1);
+}
+

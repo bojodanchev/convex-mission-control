@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import AgentList from "./AgentList";
 import AgentProfile from "./AgentProfile";
 import TaskBoard from "./TaskBoard";
@@ -19,8 +20,10 @@ const Dashboard: React.FC = () => {
 
   const agents = useQuery(api.agents.list);
   const tasksByStatus = useQuery(api.tasks.byStatus);
+  const pauseStatus = useQuery(api.tasks.getPauseStatus);
+  const togglePause = useMutation(api.tasks.togglePause);
 
-  if (!agents || !tasksByStatus) {
+  if (!agents || !tasksByStatus || pauseStatus === undefined) {
     return (
       <div className="dashboard-loading">
         <div className="loading-spinner"></div>
@@ -31,10 +34,19 @@ const Dashboard: React.FC = () => {
 
   const totalTasks = Object.values(tasksByStatus).flat().length;
   const activeAgents = agents.filter(a => a.status === "active").length;
+  const isPaused = pauseStatus?.paused || false;
 
   const selectedAgent = selectedAgentId 
     ? agents.find(a => a._id === selectedAgentId) 
     : null;
+
+  const handleTogglePause = async () => {
+    try {
+      await togglePause({ paused: !isPaused });
+    } catch (err) {
+      console.error("Failed to toggle pause:", err);
+    }
+  };
 
   return (
     <div className="dashboard">
@@ -72,6 +84,16 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="header-actions">
+          {/* System Pause Button */}
+          <button 
+            className={`action-btn pause-btn ${isPaused ? "paused" : ""}`}
+            onClick={handleTogglePause}
+            title={isPaused ? "Resume all agents" : "Pause all agents"}
+          >
+            <span>{isPaused ? "▶️" : "⏸️"}</span>
+            {isPaused ? "RESUMED" : "PAUSE"}
+          </button>
+
           <button 
             className={`action-btn chat-btn ${showChat ? "active" : ""}`}
             onClick={() => {
@@ -99,43 +121,22 @@ const Dashboard: React.FC = () => {
             <span>📄</span>
             Docs
           </button>
-        </div>
-
-        <div className="header-right">
-          <div className="clock">
-            {new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
-          </div>
-          <div className="online-status">
-            <span className="status-dot online"></span>
-            Online
-          </div>
+          <button 
+            className={`action-btn standup-btn ${activeView === "standup" ? "active" : ""}`}
+            onClick={() => setActiveView("standup")}
+          >
+            <span>📊</span>
+            Standup
+          </button>
         </div>
       </header>
 
-      {/* Chat Panel */}
-      {showChat && (
-        <div className="panel-overlay" onClick={() => setShowChat(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ChatPanel onClose={() => setShowChat(false)} />
-          </div>
-        </div>
-      )}
-
-      {/* Broadcast Panel */}
-      {showBroadcast && (
-        <div className="panel-overlay" onClick={() => setShowBroadcast(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <BroadcastPanel onClose={() => setShowBroadcast(false)} />
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="dashboard-body">
         {/* Left Sidebar - Agent List */}
         <aside className="sidebar-left">
           <AgentList 
-            agents={agents} 
+            agents={agents}
             selectedAgentId={selectedAgentId}
             onSelectAgent={setSelectedAgentId}
           />
@@ -148,7 +149,7 @@ const Dashboard: React.FC = () => {
               tasks={tasksByStatus} 
               filterAgentId={filterAgent}
               agents={agents}
-              currentAgentId={filterAgent as any} // Allow claiming when filtering by agent
+              currentAgentId={filterAgent as Id<"agents"> | undefined}
             />
           )}
           {activeView === "activity" && <ActivityFeed />}
@@ -198,6 +199,24 @@ const Dashboard: React.FC = () => {
           📊 Standup
         </button>
       </nav>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <div className="panel-overlay" onClick={() => setShowChat(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <ChatPanel onClose={() => setShowChat(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Panel */}
+      {showBroadcast && (
+        <div className="panel-overlay" onClick={() => setShowBroadcast(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <BroadcastPanel onClose={() => setShowBroadcast(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

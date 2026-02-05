@@ -32,7 +32,8 @@ export default defineSchema({
       v.literal("in_progress"),
       v.literal("review"),
       v.literal("done"),
-      v.literal("blocked")
+      v.literal("blocked"),
+      v.literal("waiting") // NEW: Waiting for input/approval
     ),
     assigneeIds: v.array(v.id("agents")),
     priority: v.union(
@@ -89,6 +90,7 @@ export default defineSchema({
       oldStatus: v.optional(v.string()),
       newStatus: v.optional(v.string()),
       content: v.optional(v.string()),
+      systemPaused: v.optional(v.boolean()), // NEW
     })),
     createdAt: v.number(),
   })

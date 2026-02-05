@@ -1,6 +1,36 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
+// System-wide pause state
+let systemPaused = false;
+
+// Get system pause status
+export const getPauseStatus = query({
+  handler: async () => {
+    return { paused: systemPaused };
+  },
+});
+
+// Toggle system pause
+export const togglePause = mutation({
+  args: {
+    paused: v.boolean(),
+  },
+  handler: async (ctx, { paused }) => {
+    systemPaused = paused;
+    
+    // Log activity
+    await ctx.db.insert("activities", {
+      type: "agent_status_changed",
+      message: paused ? "⏸️ System PAUSED — All agents on standby" : "▶️ System RESUMED — Agents active",
+      metadata: { systemPaused: paused },
+      createdAt: Date.now(),
+    });
+    
+    return { paused: systemPaused };
+  },
+});
+
 // Create a new task
 export const create = mutation({
   args: {
@@ -12,7 +42,7 @@ export const create = mutation({
     assigneeIds: v.optional(v.array(v.id("agents"))),
     dueDate: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),
-    requiredSkills: v.optional(v.array(v.string())), // NEW
+    requiredSkills: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -21,8 +51,8 @@ export const create = mutation({
       status: args.assigneeIds && args.assigneeIds.length > 0 ? "assigned" : "inbox",
       priority: args.priority || "medium",
       assigneeIds: args.assigneeIds || [],
-      requiredSkills: args.requiredSkills || [], // NEW
-      createdBy: "master", // Or could be agent ID
+      requiredSkills: args.requiredSkills || [],
+      createdBy: "master",
       createdAt: now,
       updatedAt: now,
     });
@@ -40,17 +70,10 @@ export const create = mutation({
       for (const agentId of args.assigneeIds) {
         await ctx.db.insert("notifications", {
           mentionedAgentId: agentId,
-          content: `New task assigned: ${args.title}`,
+          content: `📋 New task assigned: ${args.title}`,
           taskId,
           delivered: false,
           createdAt: now,
-        });
-
-        // Auto-subscribe to task
-        await ctx.db.insert("subscriptions", {
-          agentId,
-          taskId,
-          subscribedAt: now,
         });
       }
     }
@@ -59,63 +82,35 @@ export const create = mutation({
   },
 });
 
-// Get all tasks
+// List all tasks
 export const list = query({
-  args: {
-    status: v.optional(v.string()),
-    assigneeId: v.optional(v.id("agents")),
-  },
-  handler: async (ctx, args) => {
-    const status = args.status;
-    const assigneeId = args.assigneeId;
-
-    if (status) {
-      return await ctx.db
-        .query("tasks")
-        .withIndex("by_status", (q) => q.eq("status", status as any))
-        .order("desc")
-        .collect();
-    } else if (assigneeId) {
-      return await ctx.db
-        .query("tasks")
-        .withIndex("by_assignee", (q) => q.eq("assigneeIds", [assigneeId]))
-        .order("desc")
-        .collect();
-    }
-
-    return await ctx.db.query("tasks").order("desc").collect();
+  handler: async (ctx) => {
+    return await ctx.db.query("tasks").order("desc").take(100);
   },
 });
 
-// Get task by ID with details
+// Get tasks grouped by status
+export const byStatus = query({
+  handler: async (ctx) => {
+    const tasks = await ctx.db.query("tasks").order("desc").take(200);
+    
+    return {
+      inbox: tasks.filter(t => t.status === "inbox"),
+      assigned: tasks.filter(t => t.status === "assigned"),
+      in_progress: tasks.filter(t => t.status === "in_progress"),
+      review: tasks.filter(t => t.status === "review"),
+      done: tasks.filter(t => t.status === "done"),
+      blocked: tasks.filter(t => t.status === "blocked"),
+      waiting: tasks.filter(t => t.status === "waiting"),
+    };
+  },
+});
+
+// Get single task
 export const get = query({
   args: { id: v.id("tasks") },
   handler: async (ctx, { id }) => {
-    const task = await ctx.db.get(id);
-    if (!task) return null;
-
-    // Get assignee details
-    const assignees = [];
-    for (const agentId of task.assigneeIds) {
-      const agent = await ctx.db.get(agentId);
-      if (agent) assignees.push(agent);
-    }
-
-    // Get recent messages
-    const messages = await ctx.db
-      .query("messages")
-      .withIndex("by_task", (q) => q.eq("taskId", id))
-      .order("desc")
-      .take(20);
-
-    // Get attached documents
-    const documents = await ctx.db
-      .query("documents")
-      .withIndex("by_task", (q) => q.eq("taskId", id))
-      .order("desc")
-      .collect();
-
-    return { ...task, assignees, messages, documents };
+    return await ctx.db.get(id);
   },
 });
 
@@ -125,72 +120,39 @@ export const update = mutation({
     id: v.id("tasks"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
-    status: v.optional(
-      v.union(
-        v.literal("inbox"),
-        v.literal("assigned"),
-        v.literal("in_progress"),
-        v.literal("review"),
-        v.literal("done"),
-        v.literal("blocked")
-      )
-    ),
-    priority: v.optional(
-      v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))
-    ),
+    status: v.optional(v.union(
+      v.literal("inbox"), v.literal("assigned"), v.literal("in_progress"),
+      v.literal("review"), v.literal("done"), v.literal("blocked"), v.literal("waiting")
+    )),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))),
     assigneeIds: v.optional(v.array(v.id("agents"))),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const task = await ctx.db.get(id);
-    if (!task) return { error: "Task not found" };
-
-    const oldStatus = task.status;
-    const now = Date.now();
+    
+    if (!task) {
+      throw new Error("Task not found");
+    }
 
     await ctx.db.patch(id, {
       ...updates,
-      updatedAt: now,
+      updatedAt: Date.now(),
     });
 
-    // Log activity
-    await ctx.db.insert("activities", {
-      type: "task_updated",
-      taskId: id,
-      message: updates.status
-        ? `Task moved from ${oldStatus} to ${updates.status}`
-        : `Task updated: ${task.title}`,
-      metadata: { oldStatus, newStatus: updates.status },
-      createdAt: now,
-    });
-
-    // If completed, log special activity
-    if (updates.status === "done" && oldStatus !== "done") {
+    // Log activity if status changed
+    if (updates.status && updates.status !== task.status) {
       await ctx.db.insert("activities", {
-        type: "task_completed",
+        type: "task_updated",
         taskId: id,
-        message: `Task completed: ${task.title}`,
-        createdAt: now,
+        message: `Task status changed: ${task.title} → ${updates.status}`,
+        metadata: { oldStatus: task.status, newStatus: updates.status },
+        createdAt: Date.now(),
       });
     }
 
-    // Notify subscribers
-    const subscribers = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_task", (q) => q.eq("taskId", id))
-      .collect();
-
-    for (const sub of subscribers) {
-      await ctx.db.insert("notifications", {
-        mentionedAgentId: sub.agentId,
-        content: `Task "${task.title}" updated${updates.status ? ` → ${updates.status}` : ""}`,
-        taskId: id,
-        delivered: false,
-        createdAt: now,
-      });
-    }
-
-    return { success: true };
+    return id;
   },
 });
 
@@ -203,24 +165,19 @@ export const remove = mutation({
   },
 });
 
-// Get tasks by status (for Kanban board)
-export const byStatus = query({
-  handler: async (ctx) => {
-    const allTasks = await ctx.db.query("tasks").order("desc").collect();
-    
-    const grouped = {
-      inbox: [] as typeof allTasks,
-      assigned: [] as typeof allTasks,
-      in_progress: [] as typeof allTasks,
-      review: [] as typeof allTasks,
-      done: [] as typeof allTasks,
-      blocked: [] as typeof allTasks,
-    };
-
-    for (const task of allTasks) {
-      grouped[task.status].push(task);
-    }
-
-    return grouped;
+// Filter tasks by status
+export const byStatusFilter = query({
+  args: {
+    status: v.union(
+      v.literal("inbox"), v.literal("assigned"), v.literal("in_progress"),
+      v.literal("review"), v.literal("done"), v.literal("blocked"), v.literal("waiting")
+    ),
+  },
+  handler: async (ctx, { status }) => {
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", status))
+      .order("desc")
+      .take(50);
   },
 });
